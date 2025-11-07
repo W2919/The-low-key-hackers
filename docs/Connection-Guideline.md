@@ -16,40 +16,7 @@
 - 联系仓库管理员，确保你的GitHub账号已被添加为「协作者」（仓库→Settings→Collaborators→添加用户名）。
 - 无权限会导致`Permission denied`错误。
 
-
-## 二、方法1：HTTPS连接（个人访问令牌认证）
-适合临时操作，需输入令牌验证。
-
-### 步骤1：生成个人访问令牌（PAT）
-1. 登录GitHub→点击右上角头像→「Settings」。
-2. 左侧菜单→「Developer settings」→「Personal access tokens」→「Tokens (classic)」。
-3. 点击「Generate new token」→填写信息：
-   - Note：输入令牌名称（如`concrete-project-token`）。
-   - Expiration：选择「No expiration」（避免频繁过期）。
-   - Scopes：**必须勾选`repo`**（获取私有仓库读写权限）。
-4. 点击「Generate token」→**复制令牌并保存到本地**（仅显示一次，丢失需重新生成）。
-
-### 步骤2：克隆仓库到本地（首次操作）
-1. 终端进入存放项目的目录（如`cd ~/projects`）。
-2. 执行克隆命令（替换为你的仓库HTTPS地址）：
-   ```bash
-   git clone https://github.com/用户名/仓库名.git
-   ```
-3. 终端提示认证时：
-   - Username：输入你的GitHub用户名（或绑定邮箱）。
-   - Password：粘贴步骤1生成的PAT（输入时无显示，粘贴后回车）。
-
-### 步骤3：本地已有项目？关联远程仓库
-1. 进入本地项目目录：`cd 你的项目文件夹`。
-2. 初始化Git（若未初始化）：`git init`。
-3. 关联远程仓库：
-   ```bash
-   git remote add origin https://github.com/用户名/仓库名.git
-   ```
-4. 验证关联：`git remote -v`，显示远程地址即成功。
-
-
-## 三、方法2：SSH连接（推荐，免重复验证）
+## 二、SSH连接
 一次配置，长期使用，无需反复输入令牌。
 
 ### 步骤1：生成SSH密钥
@@ -57,14 +24,13 @@
    ```bash
    ssh-keygen -t ed25519 -C "你的邮箱@example.com"
    ```
-   - 若报错，改用兼容算法：`ssh-keygen -t rsa -b 4096 -C "你的邮箱@example.com"`
 2. 连续按回车（默认路径、无密码），生成两个文件：
    - 私钥：`~/.ssh/id_ed25519`（勿泄露，勿删除）
    - 公钥：`~/.ssh/id_ed25519.pub`（需上传到GitHub）
 
 ### 步骤2：复制公钥内容
-- **Mac/Linux**：终端输入`cat ~/.ssh/id_ed25519.pub`，复制输出的完整字符串（以`ssh-ed25519`开头）。
-- **Windows**：PowerShell输入`Get-Content ~/.ssh/id_ed25519.pub | Clip`，自动复制到剪贴板。
+- 终端输入`cat ~/.ssh/id_ed25519.pub`，复制输出的完整字符串（以`ssh-ed25519`开头）。
+
 
 ### 步骤3：GitHub添加SSH公钥
 1. 登录GitHub→头像→「Settings」→「SSH and GPG keys」→「New SSH key」。
@@ -112,15 +78,8 @@ git fetch origin  # 拉取远程分支信息（无修改本地代码）
 ## 六、常见问题解决
 1. **克隆时报错`Permission denied`**：
    - 检查是否被添加为仓库协作者。
-   - SSH方式：确认公钥已正确添加到GitHub（重新生成并添加）。
-   - HTTPS方式：确认PAT有效且勾选了`repo`权限。
+   - SSH连接确认公钥已正确添加到GitHub（重新生成并添加）。
 
-2. **HTTPS每次推送都要输入令牌**：
-   - 配置Git缓存凭证：
-     ```bash
-     git config --global credential.helper store
-     ```
-   - 下次输入后会自动保存，无需重复输入。
 
 3. **SSH连接时报错`Host key verification failed`**：
    - 终端输入`ssh -T git@github.com`，按提示输入`yes`确认主机信息。
