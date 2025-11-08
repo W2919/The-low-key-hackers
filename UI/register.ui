@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Register</class>
+ <widget class="QWidget" name="Register">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>666</width>
+    <height>619</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color:rgb(17,17,17)</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,1,1,1,1,1,1">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,8,2">
+     <item>
+      <widget class="QLabel" name="unm_text">
+       <property name="styleSheet">
+        <string notr="true">color:rgb(255, 255, 255);
+border:none;
+font: 10pt &quot;华文琥珀&quot;;</string>
+       </property>
+       <property name="text">
+        <string>用户名    ：   </string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="unm_edit">
+       <property name="styleSheet">
+        <string notr="true">color:rgb(0, 0, 0);
+background-color: rgb(255, 255, 255);
+font: 10pt &quot;华文琥珀&quot;;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,8,2">
+     <item>
+      <widget class="QLabel" name="pwd_text">
+       <property name="styleSheet">
+        <string notr="true">color:rgb(255, 255, 255);
+border:none;
+font: 10pt &quot;华文琥珀&quot;;</string>
+       </property>
+       <property name="text">
+        <string>密码      ：     </string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="pwd_edit">
+       <property name="styleSheet">
+        <string notr="true">color:rgb(0, 0, 0);
+background-color: rgb(255, 255, 255);
+font: 10pt &quot;华文琥珀&quot;;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="view_pwd_btn">
+       <property name="styleSheet">
+        <string notr="true">border:none</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>icon/睁眼.png</normaloff>icon/睁眼.png</iconset>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="1,8,2">
+     <item>
+      <widget class="QLabel" name="ensure_pwd_text">
+       <property name="styleSheet">
+        <string notr="true">color:rgb(255, 255, 255);
+border:none;
+font: 10pt &quot;华文琥珀&quot;;</string>
+       </property>
+       <property name="text">
+        <string>确认密码  ： </string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="ensure_pwd_edit">
+       <property name="styleSheet">
+        <string notr="true">color:rgb(0, 0, 0);
+background-color: rgb(255, 255, 255);
+font: 10pt &quot;华文琥珀&quot;;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="view_ensurepwd_btn">
+       <property name="styleSheet">
+        <string notr="true">border:none
+</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>icon/睁眼.png</normaloff>icon/睁眼.png</iconset>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,8,2">
+     <item>
+      <widget class="QLabel" name="phone_lbl">
+       <property name="styleSheet">
+        <string notr="true">color:rgb(255, 255, 255);
+border:none;
+font: 10pt &quot;华文琥珀&quot;;</string>
+       </property>
+       <property name="text">
+        <string>手机号     :     </string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="phone_edit">
+       <property name="styleSheet">
+        <string notr="true">color:rgb(0, 0, 0);
+background-color: rgb(255, 255, 255);
+font: 10pt &quot;华文琥珀&quot;;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_6">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="1,8,2">
+     <item>
+      <widget class="QLabel" name="verifyCode_lbl">
+       <property name="styleSheet">
+        <string notr="true">color:rgb(255, 255, 255);
+border:none;
+font: 10pt &quot;华文琥珀&quot;;</string>
+       </property>
+       <property name="text">
+        <string>验证码    ：   </string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="verifyCode_edit">
+       <property name="styleSheet">
+        <string notr="true">color:rgb(0, 0, 0);
+background-color: rgb(255, 255, 255);
+font: 10pt &quot;华文琥珀&quot;;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_9">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="1,5,0,2,2">
+     <item>
+      <widget class="QLabel" name="SMS_lbl">
+       <property name="styleSheet">
+        <string notr="true">color:rgb(255, 255, 255);
+border:none;
+font: 10pt &quot;华文琥珀&quot;;</string>
+       </property>
+       <property name="text">
+        <string>短信验证码：</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="SMS_edit">
+       <property name="styleSheet">
+        <string notr="true">color:rgb(0, 0, 0);
+background-color: rgb(255, 255, 255);
+font: 10pt &quot;华文琥珀&quot;;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_5">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="code_send_btn">
+       <property name="styleSheet">
+        <string notr="true">color:rgb(255, 255, 255);
+background-color:rgb(57,57,57);
+font: 10pt &quot;华文琥珀&quot;;</string>
+       </property>
+       <property name="text">
+        <string>发送短信验证码</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_4">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,0,0,0,0">
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="ensure_btn">
+       <property name="styleSheet">
+        <string notr="true">color:rgb(255, 255, 255);
+background-color:rgb(57,57,57);
+font: 10pt &quot;华文琥珀&quot;;</string>
+       </property>
+       <property name="text">
+        <string>确认</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_8">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="return_btn">
+       <property name="styleSheet">
+        <string notr="true">color:rgb(255, 255, 255);
+background-color:rgb(57,57,57);
+font: 10pt &quot;华文琥珀&quot;;</string>
+       </property>
+       <property name="text">
+        <string>返回</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
