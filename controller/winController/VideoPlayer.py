@@ -68,7 +68,7 @@ class VideoPlayer:
             self.get_cap(mod)
         if self.timer is None:
             self.init_timer()
-        self.timer.start(self.t / speed)
+        self.timer.start(int(self.t / speed))
 
     def video_stop(self):
         if self.timer is not None:

@@ -120,6 +120,7 @@ class MainWindow(Ui_Form, QWidget):
         self.video_btn.setEnabled(False)
 
     def nag_btn_clicked(self):
+        pass
         self.change_stacked_widget(self.myNag_W)
         self.nag_btn.setEnabled(False)
 
@@ -157,7 +158,7 @@ class MainWindow(Ui_Form, QWidget):
         self.init_road_win()
         self.init_user_win()
         self.init_main_win()
-        self.init_nag_win()
+        # self.init_nag_win()
         self.init_music_win()
         self.set_icons()
 
