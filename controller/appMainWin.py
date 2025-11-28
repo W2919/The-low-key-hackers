@@ -14,7 +14,7 @@ from controller.weather import weather
 from controller.winController.cabWin import cabWin
 from ultralytics import YOLO
 # from Views.m_W import Ui_Form
-from test_ui import Ui_Form
+from m_W2 import Ui_Form
 from controller.winController.videoWin import videoWin
 from controller.winController.takePhotoWin import takePhotoWin
 from controller.winController.photoWin import photoWin

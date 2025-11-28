@@ -279,10 +279,10 @@ font: 15pt &quot;华文琥珀&quot;;</string>
        <item>
         <widget class="QStackedWidget" name="stackedWidget">
          <property name="styleSheet">
-          <string notr="true">background-color: rgb(17, 17, 17);</string>
+          <string notr="true">background-color: rgb(39, 39, 39);</string>
          </property>
          <property name="currentIndex">
-          <number>5</number>
+          <number>4</number>
          </property>
          <widget class="QWidget" name="cab_W">
           <property name="styleSheet">
@@ -476,6 +476,25 @@ color: rgb(127, 127, 127);
           <property name="autoFillBackground">
            <bool>false</bool>
           </property>
+          <widget class="QLabel" name="mainWin_background_lbl_img">
+           <property name="geometry">
+            <rect>
+             <x>70</x>
+             <y>80</y>
+             <width>991</width>
+             <height>631</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="pixmap">
+            <pixmap>../resource/icon/mainWin_background_lbl_img.png</pixmap>
+           </property>
+           <property name="scaledContents">
+            <bool>true</bool>
+           </property>
+          </widget>
          </widget>
          <widget class="QWidget" name="video_W">
           <widget class="QDateEdit" name="video_dateEdit">

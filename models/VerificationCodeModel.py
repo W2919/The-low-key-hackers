@@ -30,6 +30,8 @@ class VerificationCode:
             "password": password,
             "content": "您的验证码是：" + number + "。请不要把验证码泄露给其他人。"  # 发送的验证码短信，要注意符合模板格式，不然无法发送成功
         }  # 请求数据必须为字典类型
+
+        print(data)
         # 发起请求
         response = requests.post(url=url, data=data, headers=headers)
         # 接收返回内容

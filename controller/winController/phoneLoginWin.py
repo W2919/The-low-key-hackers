@@ -53,6 +53,7 @@ class phoneLoginWin(QWidget, Ui_Form):
         phone_number = self.phone_edit.text()
         if self.controller.user_manager.is_valid_phone_number(phone_number):
             self.code = str(self.sms_sender.send_sms(phone_number))
+            # print(self.code)
             self.timer.start(1000)
         else:
             QMessageBox.warning(None, "warning","无效手机号")
