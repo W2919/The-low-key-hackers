@@ -179,6 +179,10 @@ class videoWin(myVideoWidget, VideoPlayer):
                     check_box.setChecked(True)
 
     def update_slider_position(self):
+        # 保护：如果当前没有有效的视频捕获对象或总帧数无效，则不更新进度条
+        if self.cap is None or not self.n or self.n <= 1:
+            return
+
         current_frame = self.cap.get(cv2.CAP_PROP_POS_FRAMES)
         # 将当前帧位置映射到 slider 的范围
         slider_position = int(
@@ -254,19 +258,31 @@ class videoWin(myVideoWidget, VideoPlayer):
             print(file_path)
 
             try:
-                # 保存文件
-                shutil.copyfile(filename, file_path)
-                print(f"文件已保存到: {file_path}")
+                # 保存文件（避免源和目标为同一文件）
+                src = os.path.abspath(filename)
+                dst = os.path.abspath(file_path)
+                if src != dst:
+                    shutil.copyfile(src, dst)
+                    print(f"文件已保存到: {file_path}")
+                else:
+                    print("选择的文件已在目标目录中，无需复制。")
             except Exception as e:
                 print(f"保存文件时出错: {e}")
+
+            # 如果视频捕获对象无效（例如文件损坏、帧率为 0），则不再继续后续操作
+            if self.cap is None:
+                return
 
             ret, frame = self.cap.read()
             if ret:
                 h, w = frame.shape[:2]
                 img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 img = QImage(img, w, h, QImage.Format_RGB888)
-                self.add_video_item((file_path, img))
-            self.controller.add_video(file_path, file_path, self.UID)
+                # 使用当前日期作为新增视频的日期信息
+                date = QDate.currentDate().toPyDate()
+                self.add_video_item((file_path, img, date))
+                # 仅在成功读取首帧并添加到列表时，才写入数据库
+                self.controller.add_video(file_path, file_path, self.UID)
 
     def refresh_slider_position(self):
         self.horizontalSlider.setValue(0)
