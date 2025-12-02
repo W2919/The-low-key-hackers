@@ -1,10 +1,14 @@
 from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QWidget, QMessageBox, QApplication
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
+
 from PyQt5.QtCore import QUrl
+from PyQt5.QtCore import QCoreApplication,Qt
 import tempfile,os,sys,warnings
 from typing_extensions import override
 MOD_MAP_EDIT_MOD = os.getenv("MOD_MAP_EDIT_MOD")
 MOD_MAP_DEV = "mod_dev"
+
+# MOD_MAP_EDIT_MOD = MOD_MAP_DEV
 
 if MOD_MAP_EDIT_MOD == MOD_MAP_DEV:
     warnings.filterwarnings("ignore", 
@@ -24,9 +28,15 @@ class CustomWebEnginePage(QWebEnginePage):
     @override
     def javaScriptConsoleMessage(self, level, message, lineNumber, sourceID):
         """处理JavaScript控制台消息"""
+
         if MOD_MAP_EDIT_MOD == MOD_MAP_DEV:
+            if "SameSite" in message and "amap.com" in message:
+                # 忽略高德地图的SameSite警告
+                return
+
             level_str = {0: "INFO", 1: "WARNING", 2: "ERROR"}.get(level, "UNKNOWN")
             print(f"JS {level_str} [Line {lineNumber}]: {message}")
+        
             pass
     
     def handleFeaturePermissionRequested(self, securityOrigin, feature):
@@ -62,20 +72,15 @@ class CustomWebEnginePage(QWebEnginePage):
             self.setFeaturePermission(securityOrigin, feature, QWebEnginePage.PermissionDeniedByUser)
             print(f"权限已拒绝: {feature}")
 
-class RealTimeMapApp(QMainWindow):
+class RealTimeMapApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('高德地图路径规划与定位')
-        self.resize(1000, 700)
-        
         # 创建临时HTML文件
         self.temp_file = self.create_temp_html()
         
         self.init_ui()
-    
-        # 连接加载完成信号
-        self.web_view.loadFinished.connect(self.on_map_loaded)
-    
+      
+        
     def create_temp_html(self):
         """创建临时HTML文件"""
         temp_dir = tempfile.gettempdir()
@@ -96,15 +101,13 @@ class RealTimeMapApp(QMainWindow):
     
     def init_ui(self):
         """初始化UI"""
-        # 创建中央部件
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
         
         # 创建布局
-        layout = QVBoxLayout(central_widget)
-        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)  # 去除边距
+
         # 创建WebEngineView
-        self.web_view = QWebEngineView()
+        self.web_view = QWebEngineView(self)
         
         # 创建自定义页面
         self.web_page = CustomWebEnginePage(self.web_view)
@@ -119,14 +122,25 @@ class RealTimeMapApp(QMainWindow):
         layout.addWidget(self.web_view)
         
         self.load_map()
-        
+
+
+
+        from PyQt5.QtWidgets import QPushButton,QHBoxLayout
+        controlLayout = QHBoxLayout()
+
+        self.safeReloadBtn = QPushButton("安全重新加载")
+        self.safeReloadBtn.clicked.connect(self.refresh)
+        controlLayout.addWidget(self.safeReloadBtn)
+        layout.addLayout(controlLayout)
+
         # 添加状态栏信息
-        self.statusBar().showMessage("地图加载中...")
+        # self.statusBar().showMessage("地图加载中...")
     
     def configure_web_settings(self):
         """配置WebEngine设置"""
         settings = self.web_view.settings()
         
+        settings.setAttribute(settings.WebGLEnabled, False)
 
         # # 启用JavaScript
         settings.setAttribute(settings.JavascriptEnabled, True)
@@ -153,19 +167,18 @@ class RealTimeMapApp(QMainWindow):
                 print("直接设置HTML内容")
             except Exception as e:
                 print(f"加载地图失败: {e}")
-        
+        self.inject_enhancement_script()
         
     def on_map_loaded(self, success):
         """地图加载完成回调"""
         if success:
             self.statusBar().showMessage("地图加载完成")
-            # print("地图加载完成")
+            print("地图加载完成")
             
             # 注入JavaScript代码以增强功能
-            self.inject_enhancement_script()
         else:
             self.statusBar().showMessage("地图加载失败")
-            # print("地图加载失败")
+            print("地图加载失败")
     
     def inject_enhancement_script(self):
         if(MOD_MAP_EDIT_MOD!=MOD_MAP_DEV):return
@@ -208,14 +221,14 @@ class RealTimeMapApp(QMainWindow):
         
         event.accept()
     def refresh(self):
-        self.load_map()
+        self.web_view.reload()
+
         pass
     
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    
     
     # 设置应用程序信息
     app.setApplicationName("高德地图路径规划")
