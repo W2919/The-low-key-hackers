@@ -34,29 +34,48 @@ class VideoPlayer:
         self.loading_msg.setModal(True)
         self.loading_msg.show()
         self.cap = cv2.VideoCapture(mod)
+        # 检查视频是否成功打开
+        if not self.cap.isOpened():
+            self.loading_msg.accept()
+            QMessageBox.warning(None, "视频打开失败", "无法打开该视频文件，文件可能已损坏或格式不支持。")
+            self.release_cap()
+            return
+
         self.f = self.cap.get(cv2.CAP_PROP_FPS)
         self.n = self.cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        # 防止帧率为 0 或无效导致除零错误
+        if not self.f or self.f <= 0:
+            self.loading_msg.accept()
+            QMessageBox.warning(None, "视频帧率异常", "该视频的帧率为 0，文件可能不完整或已损坏。")
+            self.release_cap()
+            return
+
         self.t = int(1000 / self.f)
         self.loading_msg.accept()
 
     def video_show(self, mod=0,lbl = None):
         img = self.get_frame(mod)
+        if img is None:
+            return
         h,w = img.shape[:2]
         video_img = QImage(img, w, h, QImage.Format_RGB888)
         if lbl is not None:
             lbl.setPixmap(QPixmap(video_img))
             lbl.setScaledContents(True)
         else:
-            self.show_lbl.setPixmap(QPixmap(video_img))  # 在图像标签中设置视频帧图像
-            self.show_lbl.setScaledContents(True)  # 设置图像可自动缩放以适应标签大小
+            self.show_lbl.setPixmap(QPixmap(video_img))
+            self.show_lbl.setScaledContents(True)
 
     def get_frame(self, mod=0):
         if self.cap is None:
             self.get_cap(mod)
-        ret, frame = self.cap.read()  # 从视频捕获对象中读取一帧视频
-        if ret:
-            new_img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # 将BGR格式的图像转换为RGB格式，以适配Qt显示
-            return new_img
+            if self.cap is None:
+                return None
+        ret, frame = self.cap.read()
+        if not ret:
+            return None
+        new_img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        return new_img
 
     def release_cap(self):
         if self.cap is not None:

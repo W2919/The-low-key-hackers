@@ -10,8 +10,8 @@ class DatabaseManager:
         self.connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="Wuhao291963076",
-            database="Graduation"
+            password="20040927",
+            database="software_work"
         )
 
     def execute_query(self, query, params=None):
@@ -34,8 +34,8 @@ class DatabaseManager:
         self.connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="Wuhao291963076",
-            database="Graduation"
+            password="20040927",
+            database="software_work"
         )
 
 class ConnectionPoolManager:
