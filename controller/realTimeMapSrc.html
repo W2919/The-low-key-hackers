@@ -550,12 +550,13 @@
                 });
                 
                 // 尝试获取当前位置
-                getCurrentLocation();
+                // getCurrentLocation();
                 hideLoading();
                 console.log("地图初始化完成");
             }).catch(e => {
                 console.error('地图加载失败:', e);
                 hideLoading();
+                console.log("dwaadwdwadwa")
                 alert('地图加载失败，请检查网络连接和API Key');
             });
         }
