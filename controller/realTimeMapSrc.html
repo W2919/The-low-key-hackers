@@ -11,6 +11,7 @@
     </script>
     <script type="text/javascript" src="https://webapi.amap.com/loader.js"></script>
     <style>
+        /* 样式保持不变，与原始代码相同 */
         * {
             margin: 0;
             padding: 0;
@@ -96,7 +97,7 @@
             color: #2c3e50;
         }
         
-        .input-group input {
+        .input-group input, .input-group select {
             width: 100%;
             padding: 12px;
             border: 1px solid #ddd;
@@ -105,7 +106,7 @@
             transition: all 0.3s;
         }
         
-        .input-group input:focus {
+        .input-group input:focus, .input-group select:focus {
             border-color: #4b6cb7;
             outline: none;
             box-shadow: 0 0 0 3px rgba(75, 108, 183, 0.2);
@@ -140,6 +141,10 @@
         
         button.secondary {
             background: linear-gradient(135deg, #6c757d, #5a6268);
+        }
+        
+        button.tertiary {
+            background: linear-gradient(135deg, #28a745, #20c997);
         }
         
         .location-details p, .route-details p {
@@ -215,6 +220,12 @@
             padding: 8px 0;
             border-bottom: 1px solid #eee;
             font-size: 13px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .result-item:hover {
+            background-color: #e9ecef;
         }
         
         .result-item:last-child {
@@ -230,6 +241,69 @@
             padding: 10px;
             margin-top: 10px;
             background-color: white;
+        }
+        
+        .click-marker {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e74c3c"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>') no-repeat center;
+            background-size: contain;
+            transform: translate(-50%, -100%);
+            pointer-events: none;
+            z-index: 201;
+        }
+        
+        .map-tip {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 201;
+            pointer-events: none;
+        }
+        
+        .address-details {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f5ff;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        
+        .address-details p {
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .poi-list {
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            padding: 5px;
+            background-color: white;
+        }
+        
+        .poi-item {
+            padding: 5px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .poi-item:hover {
+            background-color: #f0f5ff;
+        }
+        
+        .poi-item:last-child {
+            border-bottom: none;
         }
         
         @media (max-width: 768px) {
@@ -252,13 +326,18 @@
 <body>
     <div class="header">
         <h1>🚗 高德地图路径规划</h1>
-        <p>输入起点和终点，获取最佳驾车路线规划</p>
+        <p>输入起点和终点，获取最佳驾车路线规划 | 支持地图选点、逆地理编码</p>
     </div>
     
     <div class="container">
         <div class="sidebar">
             <div class="panel">
                 <h3>📍 路径规划</h3>
+                <div class="input-group">
+                    <label for="citySelect">搜索城市：</label>
+                    <input type="text" id="citySelect" placeholder="输入城市" value="福州市">
+                </div>
+                
                 <div class="input-group">
                     <label for="startPoint">起点：</label>
                     <input type="text" id="startPoint" placeholder="请输入起点或使用当前位置">
@@ -273,14 +352,19 @@
                     <button id="getLocation">
                         <i>📍</i> 获取当前位置
                     </button>
+                    <button id="mapSelect" class="tertiary">
+                        <i>🗺🗺️</i> 地图选点
+                    </button>
+                </div>
+                
+                <div class="btn-group">
+                    <button id="routePlan">
+                        <i>🚀</i> 开始路径规划
+                    </button>
                     <button id="clearRoute" class="secondary">
                         <i>🗑️</i> 清除路线
                     </button>
                 </div>
-                
-                <button id="routePlan">
-                    <i>🚀</i> 开始路径规划
-                </button>
             </div>
             
             <div class="panel">
@@ -289,6 +373,61 @@
                     <p>经度: <span id="currentLng">-</span></p>
                     <p>纬度: <span id="currentLat">-</span></p>
                     <p>地址: <span id="currentAddress">未获取</span></p>
+                    <p>城市: <span id="currentCity">-</span></p>
+                </div>
+                
+                <div class="address-details" id="currentAddressDetails" style="display: none;">
+                    <p>省份: <span id="currentProvince">-</span></p>
+                    <p>区县: <span id="currentDistrict">-</span></p>
+                    <p>乡镇: <span id="currentTownship">-</span></p>
+                    <p>街道: <span id="currentStreet">-</span></p>
+                    <p>门牌: <span id="currentNumber">-</span></p>
+                </div>
+                
+                <div class="poi-list" id="currentNearbyPOI" style="display: none;">
+                    <div style="font-weight: bold; margin-bottom: 5px;">附近地点:</div>
+                    <!-- 附近POI列表将在这里显示 -->
+                </div>
+
+                <div class="btn-group">
+                    <button id="setAsStart_now">
+                        <i>➡</i> 设为起点
+                    </button>
+                    <button id="setAsEnd_now">
+                        <i>🏁</i> 设为终点
+                    </button>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h3>🗺🗺️ 地图选点结果</h3>
+                <div class="location-details">
+                    <p>经度: <span id="clickLng">-</span></p>
+                    <p>纬度: <span id="clickLat">-</span></p>
+                    <p>地址: <span id="clickAddress">未选择</span></p>
+                    <p>城市: <span id="clickCity">-</span></p>
+                </div>
+                
+                <div class="address-details" id="clickAddressDetails" style="display: none;">
+                    <p>省份: <span id="clickProvince">-</span></p>
+                    <p>区县: <span id="clickDistrict">-</span></p>
+                    <p>乡镇: <span id="clickTownship">-</span></p>
+                    <p>街道: <span id="clickStreet">-</span></p>
+                    <p>门牌: <span id="clickNumber">-</span></p>
+                </div>
+                
+                <div class="poi-list" id="clickNearbyPOI" style="display: none;">
+                    <div style="font-weight: bold; margin-bottom: 5px;">附近地点:</div>
+                    <!-- 附近POI列表将在这里显示 -->
+                </div>
+                
+                <div class="btn-group">
+                    <button id="setAsStart">
+                        <i>➡</i> 设为起点
+                    </button>
+                    <button id="setAsEnd">
+                        <i>🏁</i> 设为终点
+                    </button>
                 </div>
             </div>
             
@@ -305,6 +444,8 @@
         
         <div class="map-container">
             <div id="map"></div>
+            <div class="map-tip" id="mapTip">点击地图选择位置</div>
+            <div class="click-marker" id="clickMarker" style="display: none;"></div>
             <div class="loading" id="loading">
                 <div class="spinner"></div>
                 <p>正在加载地图和路径规划...</p>
@@ -316,8 +457,27 @@
         // 初始化变量
         let map = null;
         let geolocation = null;
+        let geocoder = null;
         let driving = null;
+        let placeSearch = null;
         let currentPosition = null;
+        let clickMarker = null;
+        let isMapSelectMode = false;
+        let currentCity = "北京";
+        
+        // 新增：保存起点和终点的精确坐标和显示名称
+        let startPointData = {
+            lnglat: null,
+            address: null
+        };
+        let endPointData = {
+            lnglat: null,
+            address: null
+        };
+        
+        // 新增：起点和终点标记
+        let startMarker = null;
+        let endMarker = null;
         
         // 显示加载状态
         function showLoading() {
@@ -332,12 +492,11 @@
         // 初始化地图
         function initMap() {
             showLoading();
-            
             // 使用AMapLoader加载地图
             AMapLoader.load({
                 key: "4d0632a7126fcd25f89286bc3d33e0e7",
                 version: "2.0",
-                plugins: ['AMap.Geolocation', 'AMap.Driving', 'AMap.Scale', 'AMap.ToolBar']
+                plugins: ['AMap.Geolocation', 'AMap.Driving', 'AMap.Scale', 'AMap.ToolBar', 'AMap.Geocoder', 'AMap.PlaceSearch']
             }).then((AMap) => {
                 // 创建地图实例
                 map = new AMap.Map('map', {
@@ -357,28 +516,189 @@
                     timeout: 10000,
                     buttonOffset: new AMap.Pixel(10, 20),
                     zoomToAccuracy: true,
-                    buttonPosition: 'RB'
+                    buttonPosition: 'RB',
+                    showButton: false
                 });
                 
                 map.addControl(geolocation);
                 
-                // 修复：初始化路径规划插件，不设置panel或设置为存在的元素
-                driving = new AMap.Driving({
+                // 初始化逆地理编码插件
+                geocoder = new AMap.Geocoder({
+                    city: "全国", // 默认全国
+                    radius: 1000 // 范围半径
+                });
+                
+                // 初始化地点搜索插件
+                placeSearch = new AMap.PlaceSearch({
+                    city: "全国",
                     map: map,
-                    policy: AMap.DrivingPolicy.LEAST_TIME,
-                    // 不设置panel或设置为null，避免appendChild错误
                     panel: null
                 });
                 
+                // 初始化路径规划插件
+                driving = new AMap.Driving({
+                    map: map,
+                    policy: AMap.DrivingPolicy.LEAST_TIME,
+                    panel: null
+                });
+                
+                // 添加地图点击事件
+                map.on('click', function(e) {
+                    if (isMapSelectMode) {
+                        handleMapClick(e);
+                    }
+                });
+                
                 // 尝试获取当前位置
-                getCurrentLocation();
+                // getCurrentLocation();
                 hideLoading();
                 console.log("地图初始化完成");
             }).catch(e => {
                 console.error('地图加载失败:', e);
                 hideLoading();
+                console.log("dwaadwdwadwa")
                 alert('地图加载失败，请检查网络连接和API Key');
             });
+        }
+        
+        // 处理地图点击事件
+        function handleMapClick(e) {
+            const lnglat = e.lnglat;
+            document.getElementById('clickLng').textContent = lnglat.lng.toFixed(6);
+            document.getElementById('clickLat').textContent = lnglat.lat.toFixed(6);
+            
+            // 显示点击标记
+            const marker = document.getElementById('clickMarker');
+            marker.style.display = 'block';
+            marker.style.left = e.pixel.x + 'px';
+            marker.style.top = e.pixel.y + 'px';
+            
+            // 在地图上添加标记
+            if (clickMarker) {
+                clickMarker.setMap(null);   
+            }
+            
+            clickMarker = new AMap.Marker({
+                position: [lnglat.lng, lnglat.lat],
+                map: map,
+                title: '选择的位置',
+                content: '<div style="background-color: #e74c3c; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>'
+            });
+            
+            // 进行逆地理编码
+            reverseGeocode(lnglat.lng, lnglat.lat, 'click');
+        }
+        
+        // 逆地理编码：根据经纬度获取地址信息
+        function reverseGeocode(lng, lat, type = 'current') {
+            showLoading();
+            geocoder.getAddress([lng, lat], function(status, result) {
+                hideLoading();
+                
+                if (status === 'complete' && result.regeocode) {
+                    const address = result.regeocode.formattedAddress;
+                    const prefix = type === 'click' ? 'click' : 'current';
+                    
+                    // 更新基本地址信息
+                    document.getElementById(`${prefix}Address`).textContent = address;
+                    
+                    // 更新详细地址信息
+                    updateAddressDetails(result.regeocode, prefix);
+                    
+                    // 获取附近POI信息
+                    getNearbyPlaces(lng, lat, prefix);
+                    
+                    // 更新城市信息
+                    const city = getCityFromAddress(result.regeocode);
+                    if (city) {
+                        currentCity = city;
+                        document.getElementById(`${prefix}City`).textContent = city;
+                        document.getElementById('citySelect').value = city;
+                    }
+                    
+                    // 保存坐标和地址信息
+                    if (type === 'click') {
+                        // 保存地图选点的坐标和地址
+                        window.currentClickPoint = {
+                            lnglat: [lng, lat],
+                            address: address
+                        };
+                    }
+                } else {
+                    document.getElementById(`${prefix}Address`).textContent = '地址解析失败';
+                    document.getElementById(`${prefix}AddressDetails`).style.display = 'none';
+                    document.getElementById(`${prefix}NearbyPOI`).style.display = 'none';
+                }
+            });
+        }
+        
+        // 更新详细地址信息
+        function updateAddressDetails(regeocode, prefix) {
+            const addressComponent = regeocode.addressComponent;
+            const detailsPanel = document.getElementById(`${prefix}AddressDetails`);
+            
+            if (addressComponent) {
+                document.getElementById(`${prefix}Province`).textContent = addressComponent.province || '-';
+                document.getElementById(`${prefix}District`).textContent = addressComponent.district || '-';
+                document.getElementById(`${prefix}Township`).textContent = addressComponent.township || '-';
+                document.getElementById(`${prefix}Street`).textContent = addressComponent.street || '-';
+                document.getElementById(`${prefix}Number`).textContent = addressComponent.number || '-';
+                
+                detailsPanel.style.display = 'block';
+            } else {
+                detailsPanel.style.display = 'none';
+            }
+        }
+        
+        // 从地址信息中提取城市
+        function getCityFromAddress(regeocode) {
+            if (regeocode.addressComponent) {
+                return regeocode.addressComponent.city || 
+                       regeocode.addressComponent.province || 
+                       '未知城市';
+            }
+            return null;
+        }
+        
+        // 获取附近位置信息
+        function getNearbyPlaces(lng, lat, prefix) {
+            const poiPanel = document.getElementById(`${prefix}NearbyPOI`);
+            
+            // 使用逆地理编码结果中的POI信息
+            if (window.AMap && geocoder) {
+                geocoder.getAddress([lng, lat], function(status, result) {
+                    if (status === 'complete' && result.regeocode) {
+                        const pois = result.regeocode.pois;
+                        if (pois && pois.length > 0) {
+                            let poiHtml = '';
+                            // 显示前5个POI
+                            for (let i = 0; i < Math.min(5, pois.length); i++) {
+                                const poi = pois[i];
+                                poiHtml += `<div class="poi-item" onclick="selectPOI('${poi.name}', '${prefix}')">
+                                    <div><strong>${poi.name}</strong></div>
+                                    <div>${poi.address || '无地址信息'}</div>
+                                    <div>距离: ${(poi.distance || 0).toFixed(0)}米</div>
+                                </div>`;
+                            }
+                            poiPanel.innerHTML = poiHtml;
+                            poiPanel.style.display = 'block';
+                        } else {
+                            poiPanel.innerHTML = '<div class="poi-item">无附近地点信息</div>';
+                            poiPanel.style.display = 'block';
+                        }
+                    } else {
+                        poiPanel.innerHTML = '<div class="poi-item">获取附近地点失败</div>';
+                        poiPanel.style.display = 'block';
+                    }
+                });
+            }
+        }
+        
+        // 选择POI作为地址
+        function selectPOI(poiName, prefix) {
+            const addressInput = prefix === 'click' ? 'endPoint' : 'startPoint';
+            document.getElementById(addressInput).value = poiName;
+            console.log(`已设置${poiName}为${prefix === 'click' ? '终点' : '起点'}`);
         }
         
         // 获取当前位置
@@ -393,6 +713,7 @@
                         lat: result.position.lat,
                         address: result.formattedAddress
                     };
+                    
                     // 更新界面显示
                     document.getElementById('currentLng').textContent = result.position.lng.toFixed(6);
                     document.getElementById('currentLat').textContent = result.position.lat.toFixed(6);
@@ -401,9 +722,12 @@
                     // 将当前位置设置为起点
                     document.getElementById('startPoint').value = result.formattedAddress;
                     
+                    // 保存当前位置信息
+                    startPointData.lnglat = [result.position.lng, result.position.lat];
+                    startPointData.address = result.formattedAddress;
+                    
                     // 将地图中心设置为当前位置
                     map.setCenter([result.position.lng, result.position.lat]);
-                    
                     // 添加当前位置标记
                     new AMap.Marker({
                         position: [result.position.lng, result.position.lat],
@@ -412,11 +736,14 @@
                         content: '<div style="background-color: #4b6cb7; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>'
                     });
                     
-                    // console.log("当前位置获取成功:", result.formattedAddress);
+                    // 获取详细地址信息
+                    reverseGeocode(result.position.lng, result.position.lat, 'current');
+                    
                 } else {
                     console.error('获取当前位置失败:', result);
-                    alert('获取当前位置失败: ' + result.message);
                     document.getElementById('currentAddress').textContent = '获取位置失败';
+                    document.getElementById('currentAddressDetails').style.display = 'none';
+                    document.getElementById('currentNearbyPOI').style.display = 'none';
                     
                     // 设置默认起点
                     document.getElementById('startPoint').value = "北京市朝阳区";
@@ -424,13 +751,142 @@
             });
         }
         
+        // 切换地图选点模式
+        function toggleMapSelectMode() {
+            isMapSelectMode = !isMapSelectMode;
+            const mapTip = document.getElementById('mapTip');
+            const mapSelectBtn = document.getElementById('mapSelect');
+            
+            if (isMapSelectMode) {
+                mapTip.textContent = "地图选点模式已开启，点击地图选择位置";
+                mapTip.style.backgroundColor = 'rgba(231, 76, 60, 0.8)';
+                mapSelectBtn.innerHTML = '<i>🗺🗺️</i> 退出选点模式';
+                mapSelectBtn.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
+            } else {
+                mapTip.textContent = "点击地图选择位置";
+                mapTip.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                mapSelectBtn.innerHTML = '<i>🗺🗺️</i> 地图选点';
+                mapSelectBtn.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
+                document.getElementById('clickMarker').style.display = 'none';
+            }
+        }
+        
+        // 设置选点为起点
+        function setClickPointAsStart() {
+            if (window.currentClickPoint) {
+                const address = window.currentClickPoint.address;
+                const lnglat = window.currentClickPoint.lnglat;
+                
+                document.getElementById('startPoint').value = address;
+                startPointData.lnglat = lnglat;
+                startPointData.address = address;
+                
+                // 添加起点标记
+                addStartMarker(lnglat);
+                
+                console.log("已设置为起点");
+            } else {
+                console.log("请先在地图上选择有效位置");
+            }
+        }
+        
+        // 设置选点为终点
+        function setClickPointAsEnd() {
+            if (window.currentClickPoint) {
+                const address = window.currentClickPoint.address;
+                const lnglat = window.currentClickPoint.lnglat;
+                
+                document.getElementById('endPoint').value = address;
+                endPointData.lnglat = lnglat;
+                endPointData.address = address;
+                
+                // 添加终点标记
+                addEndMarker(lnglat);
+                
+                console.log("已设置为终点");
+            } else {
+                console.log("请先在地图上选择有效位置");
+            }
+        }
+        
+        // 设置当前位置为起点
+        function setCurrentAsStart() {
+            const address = document.getElementById('currentAddress').textContent;
+            if (address && address !== '未获取' && address !== '获取位置失败') {
+                document.getElementById('startPoint').value = address;
+                startPointData.lnglat = [parseFloat(document.getElementById('currentLng').textContent), 
+                                        parseFloat(document.getElementById('currentLat').textContent)];
+                startPointData.address = address;
+                
+                // 添加起点标记
+                addStartMarker(startPointData.lnglat);
+                
+                console.log("已设置当前位置为起点");
+            } else {
+                console.log("请先获取当前位置");
+            }
+        }
+        
+        // 设置当前位置为终点
+        function setCurrentAsEnd() {
+            const address = document.getElementById('currentAddress').textContent;
+            if (address && address !== '未获取' && address !== '获取位置失败') {
+                document.getElementById('endPoint').value = address;
+                endPointData.lnglat = [parseFloat(document.getElementById('currentLng').textContent), 
+                                      parseFloat(document.getElementById('currentLat').textContent)];
+                endPointData.address = address;
+                
+                // 添加终点标记
+                addEndMarker(endPointData.lnglat);
+                
+                console.log("已设置当前位置为终点");
+            } else {
+                console.log("请先获取当前位置");
+            }
+        }
+        
+        // 新增：添加起点标记
+        function addStartMarker(lnglat) {
+            if (startMarker) {
+                startMarker.setMap(null);
+            }
+            
+            startMarker = new AMap.Marker({
+                position: lnglat,
+                map: map,
+                title: '起点',
+                content: '<div style="background-color: #28a745; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>'
+            });
+        }
+        
+        // 新增：添加终点标记
+        function addEndMarker(lnglat) {
+            if (endMarker) {
+                endMarker.setMap(null);
+            }
+            
+            endMarker = new AMap.Marker({
+                position: lnglat,
+                map: map,
+                title: '终点',
+                content: '<div style="background-color: #e74c3c; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>'
+            });
+        }
+        
         // 路径规划
         function routePlan() {
             const startPoint = document.getElementById('startPoint').value;
             const endPoint = document.getElementById('endPoint').value;
+            const city = document.getElementById('citySelect').value;
             
             if (!startPoint || !endPoint) {
                 alert('请输入起点和终点');
+                return;
+            }
+            
+            // 检查是否有精确坐标
+            if (!startPointData.lnglat || !endPointData.lnglat) {
+                alert('请先通过地图选点或获取当前位置来设置精确的起点和终点坐标');
                 return;
             }
             
@@ -440,16 +896,14 @@
             driving.clear();
             document.getElementById('routePanel').innerHTML = '计算中...';
             
-            // 定义points参数
-            const points = [
-                {keyword: startPoint},
-                {keyword: endPoint}
-            ];
+            console.log("开始路径规划，使用精确坐标:");
+            console.log("起点坐标:", startPointData.lnglat);
+            console.log("终点坐标:", endPointData.lnglat);
+            console.log("起点地址:", startPointData.address);
+            console.log("终点地址:", endPointData.address);
             
-            console.log("开始路径规划，参数:", points);
-            
-            // 进行路径规划
-            driving.search(points, function(status, result) {
+            // 使用精确坐标进行路径规划
+            driving.search(startPointData.lnglat, endPointData.lnglat, function(status, result) {
                 console.log("路径规划状态:", status);
                 console.log("路径规划结果:", result);
                 
@@ -468,6 +922,11 @@
                         
                         // 显示详细路径
                         let routeHtml = '<div style="font-weight: bold; margin-bottom: 10px;">路线详情:</div>';
+                        routeHtml += `<div style="margin-bottom: 10px; padding: 5px; background: #e8f4fd; border-radius: 4px;">
+                            <div><strong>起点:</strong> ${startPointData.address}</div>
+                            <div><strong>终点:</strong> ${endPointData.address}</div>
+                        </div>`;
+                        
                         if (route.steps && route.steps.length > 0) {
                             route.steps.forEach((step, index) => {
                                 routeHtml += `<div class="result-item">${index+1}. ${step.instruction} (${(step.distance/1000).toFixed(1)}公里)</div>`;
@@ -502,6 +961,23 @@
             if (driving) {
                 driving.clear();
             }
+            
+            // 清除起点和终点标记
+            if (startMarker) {
+                startMarker.setMap(null);
+                startMarker = null;
+            }
+            if (endMarker) {
+                endMarker.setMap(null);
+                endMarker = null;
+            }
+            
+            // 重置起点和终点数据
+            startPointData.lnglat = null;
+            startPointData.address = null;
+            endPointData.lnglat = null;
+            endPointData.address = null;
+            
             document.getElementById('routeDistance').textContent = '-';
             document.getElementById('routeTime').textContent = '-';
             document.getElementById('routeInstructions').textContent = '-';
@@ -517,6 +993,11 @@
             document.getElementById('getLocation').addEventListener('click', getCurrentLocation);
             document.getElementById('routePlan').addEventListener('click', routePlan);
             document.getElementById('clearRoute').addEventListener('click', clearRoute);
+            document.getElementById('mapSelect').addEventListener('click', toggleMapSelectMode);
+            document.getElementById('setAsStart').addEventListener('click', setClickPointAsStart);
+            document.getElementById('setAsEnd').addEventListener('click', setClickPointAsEnd);
+            document.getElementById('setAsStart_now').addEventListener('click', setCurrentAsStart);
+            document.getElementById('setAsEnd_now').addEventListener('click', setCurrentAsEnd);
             
             // 添加回车键触发路径规划
             document.getElementById('endPoint').addEventListener('keypress', function(e) {
@@ -524,10 +1005,13 @@
                     routePlan();
                 }
             });
+            
+            // 城市选择变化事件
+            document.getElementById('citySelect').addEventListener('change', function() {
+                currentCity = this.value;
+                // 可以在这里添加根据城市切换地图中心点的逻辑
+            });
         };
     </script>
 </body>
 </html>
-
-
-
