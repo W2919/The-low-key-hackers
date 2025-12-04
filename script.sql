@@ -1,13 +1,14 @@
-create table photo
+show tables;
+
+create table IF NOT EXISTS  photo
 (
     ID        int auto_increment
         primary key,
     file_path text null,
     name      text null,
-    UID       int  null
+    UID       int  null 
 );
-
-create table users_data
+create table IF NOT EXISTS  users_data
 (
     ID                   int auto_increment
         primary key,
@@ -18,7 +19,7 @@ create table users_data
     user_road_video_path text        null
 );
 
-create table video
+create table IF NOT EXISTS  video
 (
     ID        int auto_increment
         primary key,
@@ -29,3 +30,11 @@ create table video
 );
 
 
+create table IF NOT EXISTS  music
+(
+    ID        int auto_increment
+        primary key,
+    file_path text                               null,
+    name      text                               not null,
+    UID       int                                null
+);
