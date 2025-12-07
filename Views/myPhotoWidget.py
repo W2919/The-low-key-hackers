@@ -3,7 +3,8 @@
 # @Author : WWEE
 # @File   : myPhotoWidget.py
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QSlider, QLabel, QScrollArea
+from PyQt5.QtCore import Qt
 
 
 class MyPhotoWidget(QWidget):
@@ -12,12 +13,69 @@ class MyPhotoWidget(QWidget):
         self.initUI()
     def initUI(self):
         self.setObjectName("photo_W")
-        self.photo_show_lbl = QtWidgets.QLabel(self)
-        self.photo_show_lbl.setGeometry(QtCore.QRect(230, 10, 850, 660))
-        self.photo_show_lbl.setStyleSheet("border-radius:10px;\n"
-                                          "background-color: rgb(20, 20, 20);")
+
+        # 创建滚动区域用于显示可缩放的图片
+        self.photo_scroll_area = QScrollArea(self)
+        self.photo_scroll_area.setGeometry(QtCore.QRect(230, 10, 850, 660))
+        self.photo_scroll_area.setStyleSheet("border-radius:10px;\n"
+                                              "background-color: rgb(20, 20, 20);")
+        self.photo_scroll_area.setWidgetResizable(False)
+        self.photo_scroll_area.setAlignment(Qt.AlignCenter)
+        self.photo_scroll_area.setObjectName("photo_scroll_area")
+
+        # 图片显示标签（放在滚动区域内）
+        self.photo_show_lbl = QtWidgets.QLabel()
+        self.photo_show_lbl.setStyleSheet("background-color: rgb(20, 20, 20);")
         self.photo_show_lbl.setText("")
         self.photo_show_lbl.setObjectName("photo_show_lbl")
+        self.photo_show_lbl.setAlignment(Qt.AlignCenter)
+        self.photo_scroll_area.setWidget(self.photo_show_lbl)
+
+        # 缩放滑动条
+        self.zoom_slider = QSlider(Qt.Horizontal, self)
+        self.zoom_slider.setGeometry(QtCore.QRect(350, 680, 600, 30))
+        self.zoom_slider.setMinimum(10)   # 最小缩放 10%
+        self.zoom_slider.setMaximum(500)  # 最大缩放 500%
+        self.zoom_slider.setValue(100)    # 默认 100%
+        self.zoom_slider.setTickPosition(QSlider.TicksBelow)
+        self.zoom_slider.setTickInterval(50)
+        self.zoom_slider.setStyleSheet("""
+            QSlider::groove:horizontal {
+                border: 1px solid #999999;
+                height: 8px;
+                background: rgb(40, 40, 40);
+                margin: 2px 0;
+                border-radius: 4px;
+            }
+            QSlider::handle:horizontal {
+                background: rgb(100, 100, 100);
+                border: 1px solid #5c5c5c;
+                width: 18px;
+                margin: -5px 0;
+                border-radius: 9px;
+            }
+            QSlider::handle:horizontal:hover {
+                background: rgb(150, 150, 150);
+            }
+        """)
+        self.zoom_slider.setObjectName("zoom_slider")
+
+        # 缩放比例标签
+        self.zoom_label = QLabel(self)
+        self.zoom_label.setGeometry(QtCore.QRect(960, 680, 80, 30))
+        self.zoom_label.setStyleSheet("font: 12pt \"微软雅黑\";\n"
+                                       "color: rgb(127, 127, 127);")
+        self.zoom_label.setText("100%")
+        self.zoom_label.setAlignment(Qt.AlignCenter)
+        self.zoom_label.setObjectName("zoom_label")
+
+        # 缩放提示标签
+        self.zoom_hint_label = QLabel(self)
+        self.zoom_hint_label.setGeometry(QtCore.QRect(250, 680, 100, 30))
+        self.zoom_hint_label.setStyleSheet("font: 10pt \"微软雅黑\";\n"
+                                            "color: rgb(100, 100, 100);")
+        self.zoom_hint_label.setText("缩放:")
+        self.zoom_hint_label.setObjectName("zoom_hint_label")
         self.photo_single_del_btn = QtWidgets.QPushButton(self)
         self.photo_single_del_btn.setGeometry(QtCore.QRect(620, 740, 111, 31))
         self.photo_single_del_btn.setStyleSheet("font: 15pt \"华文琥珀\";\n"
