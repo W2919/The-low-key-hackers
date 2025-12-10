@@ -8,12 +8,17 @@ import shutil
 
 from controller.photo_mananger import PhotoManager
 import cv2
-from PyQt5.QtCore import QThreadPool, QRunnable, QObject, pyqtSignal, QSize
+from PyQt5.QtCore import QThreadPool, QRunnable, QObject, pyqtSignal, QSize, Qt
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QCheckBox, QHBoxLayout, QListWidgetItem, QFileDialog, \
     QMessageBox
 
 from Views.myPhotoWidget import MyPhotoWidget
+
+
+class ZoomableScrollArea:
+    """用于处理滚动区域的鼠标滚轮事件的辅助类"""
+    pass
 
 class ImgLoader(QRunnable):
     def __init__(self, UID):
@@ -54,6 +59,16 @@ class photoWin(MyPhotoWidget):
         self.init_list()
         self.UID = UID
 
+        # 初始化缩放相关变量
+        self.current_pixmap = None  # 存储当前原始图片
+        self.zoom_factor = 1.0      # 当前缩放比例 (1.0 = 100%)
+        self.min_zoom = 0.1         # 最小缩放 10%
+        self.max_zoom = 5.0         # 最大缩放 500%
+
+        # 初始化拖动相关变量
+        self.is_dragging = False    # 是否正在拖动
+        self.drag_start_pos = None  # 拖动起始位置
+
         self.current_list_view = self.photo_list_view_normal
         self.thread_pool = QThreadPool()
         self.load_img()
@@ -66,6 +81,12 @@ class photoWin(MyPhotoWidget):
         self.photo_prev_btn.clicked.connect(self.photo_go_prev)
         self.photo_single_del_btn.clicked.connect(self.delete_current_img)
         self.controller = PhotoManager()
+
+        # 连接缩放滑动条信号
+        self.zoom_slider.valueChanged.connect(self.on_slider_zoom)
+
+        # 安装事件过滤器以捕获鼠标滚轮事件
+        self.photo_scroll_area.viewport().installEventFilter(self)
 
 
     def load_img(self):
@@ -102,8 +123,8 @@ class photoWin(MyPhotoWidget):
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             w, h = img.shape[1], img.shape[0]
             img = QImage(img, w, h, QImage.Format_RGB888)
-            self.photo_show_lbl.setPixmap(QPixmap.fromImage(img))
-            self.photo_show_lbl.setScaledContents(True)
+            # 使用新的显示方法（支持缩放）
+            self.display_image(QPixmap.fromImage(img))
             self.current_list_view.setCurrentIndex(self.current_list_view.model().index(prev_index, 0))
         else:
             QMessageBox.warning(None, "提示", "列表为空")
@@ -117,8 +138,8 @@ class photoWin(MyPhotoWidget):
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             w, h = img.shape[1], img.shape[0]
             img = QImage(img, w, h, QImage.Format_RGB888)
-            self.photo_show_lbl.setPixmap(QPixmap.fromImage(img))
-            self.photo_show_lbl.setScaledContents(True)
+            # 使用新的显示方法（支持缩放）
+            self.display_image(QPixmap.fromImage(img))
             self.current_list_view.setCurrentIndex(self.current_list_view.model().index(next_index, 0))
         else:
             QMessageBox.warning(None, "提示", "列表为空")
@@ -206,8 +227,8 @@ class photoWin(MyPhotoWidget):
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             w, h = img.shape[1], img.shape[0]
             img = QImage(img,w, h, QImage.Format_RGB888)
-            self.photo_show_lbl.setPixmap(QPixmap.fromImage(img))
-            self.photo_show_lbl.setScaledContents(True)
+            # 使用新的显示方法（支持缩放）
+            self.display_image(QPixmap.fromImage(img))
         else:
             pass
 
@@ -244,10 +265,10 @@ class photoWin(MyPhotoWidget):
         filename, _ = QFileDialog.getOpenFileName(None, 'Open Photo','', 'Image(*.jpg  *.jpeg  *.png  *.bmp  *.gif)')
         if filename:
             name = os.path.basename(filename)
-            self.photo_show_lbl.setPixmap(QPixmap(filename))
+            # 使用新的显示方法（支持缩放）
+            self.display_image(QPixmap(filename))
             file_path = os.path.join(self.relative_path, name)
             print(file_path)
-            self.photo_show_lbl.setScaledContents(True)
             try:
                 # 保存文件
                 shutil.copyfile(filename, file_path)
@@ -263,5 +284,111 @@ class photoWin(MyPhotoWidget):
 
     def refresh(self):
         pass
+
+    def eventFilter(self, obj, event):
+        """事件过滤器：捕获鼠标滚轮事件实现缩放，捕获鼠标拖动事件实现平移"""
+        from PyQt5.QtCore import QEvent
+        if obj == self.photo_scroll_area.viewport():
+            # 鼠标滚轮缩放
+            if event.type() == QEvent.Wheel:
+                if self.current_pixmap is not None:
+                    # 获取滚轮滚动方向
+                    delta = event.angleDelta().y()
+                    # 计算缩放步长
+                    zoom_step = 0.1
+                    if delta > 0:
+                        # 向上滚动，放大
+                        new_zoom = min(self.zoom_factor + zoom_step, self.max_zoom)
+                    else:
+                        # 向下滚动，缩小
+                        new_zoom = max(self.zoom_factor - zoom_step, self.min_zoom)
+
+                    if new_zoom != self.zoom_factor:
+                        self.zoom_factor = new_zoom
+                        self.apply_zoom()
+                        # 同步更新滑动条（阻止信号避免重复触发）
+                        self.zoom_slider.blockSignals(True)
+                        self.zoom_slider.setValue(int(self.zoom_factor * 100))
+                        self.zoom_slider.blockSignals(False)
+                        self.update_zoom_label()
+                    return True  # 事件已处理
+
+            # 鼠标左键按下，开始拖动
+            elif event.type() == QEvent.MouseButtonPress:
+                if event.button() == Qt.LeftButton and self.current_pixmap is not None:
+                    self.is_dragging = True
+                    self.drag_start_pos = event.pos()
+                    # 设置拖动光标
+                    self.photo_scroll_area.viewport().setCursor(Qt.ClosedHandCursor)
+                    return True
+
+            # 鼠标移动，执行拖动
+            elif event.type() == QEvent.MouseMove:
+                if self.is_dragging and self.drag_start_pos is not None:
+                    # 计算移动距离
+                    delta = event.pos() - self.drag_start_pos
+                    self.drag_start_pos = event.pos()
+
+                    # 获取滚动条并更新位置
+                    h_bar = self.photo_scroll_area.horizontalScrollBar()
+                    v_bar = self.photo_scroll_area.verticalScrollBar()
+                    h_bar.setValue(h_bar.value() - delta.x())
+                    v_bar.setValue(v_bar.value() - delta.y())
+                    return True
+
+            # 鼠标左键释放，停止拖动
+            elif event.type() == QEvent.MouseButtonRelease:
+                if event.button() == Qt.LeftButton and self.is_dragging:
+                    self.is_dragging = False
+                    self.drag_start_pos = None
+                    # 恢复默认光标
+                    self.photo_scroll_area.viewport().setCursor(Qt.ArrowCursor)
+                    return True
+
+        return super().eventFilter(obj, event)
+
+    def on_slider_zoom(self, value):
+        """滑动条缩放：通过拖动滑动条改变缩放比例"""
+        if self.current_pixmap is not None:
+            self.zoom_factor = value / 100.0
+            self.apply_zoom()
+            self.update_zoom_label()
+
+    def apply_zoom(self):
+        """应用缩放到图片"""
+        if self.current_pixmap is not None:
+            # 计算缩放后的尺寸
+            original_size = self.current_pixmap.size()
+            new_width = int(original_size.width() * self.zoom_factor)
+            new_height = int(original_size.height() * self.zoom_factor)
+
+            # 缩放图片
+            scaled_pixmap = self.current_pixmap.scaled(
+                new_width, new_height,
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation
+            )
+
+            # 设置到标签
+            self.photo_show_lbl.setPixmap(scaled_pixmap)
+            self.photo_show_lbl.setFixedSize(scaled_pixmap.size())
+
+    def update_zoom_label(self):
+        """更新缩放比例显示标签"""
+        percentage = int(self.zoom_factor * 100)
+        self.zoom_label.setText(f"{percentage}%")
+
+    def reset_zoom(self):
+        """重置缩放比例为100%"""
+        self.zoom_factor = 1.0
+        self.zoom_slider.setValue(100)
+        self.update_zoom_label()
+        if self.current_pixmap is not None:
+            self.apply_zoom()
+
+    def display_image(self, pixmap):
+        """显示图片并重置缩放"""
+        self.current_pixmap = pixmap
+        self.reset_zoom()
 
 
